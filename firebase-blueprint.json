@@ -1,0 +1,121 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and engagement stats",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "points": { "type": "number", "description": "Currency for the shop" },
+        "totalStudyTime": { "type": "number", "description": "Total study time in seconds" },
+        "character": {
+          "type": "object",
+          "properties": {
+            "base": { "type": "string" },
+            "hat": { "type": "string" },
+            "outfit": { "type": "string" },
+            "accessory": { "type": "string" }
+          }
+        },
+        "inventory": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "theme": { "type": "string" },
+        "hasSeenTutorial": { "type": "boolean" },
+        "reflections": { "type": "number" }
+      },
+      "required": ["uid", "points", "totalStudyTime"]
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "A single study session record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "duration": { "type": "number", "description": "Duration in minutes" },
+        "pointsEarned": { "type": "number" },
+        "topic": { "type": "string" },
+        "materials": { "type": "string" },
+        "mode": { "type": "string", "enum": ["solo", "friend"] },
+        "summary": { "type": "object" }
+      },
+      "required": ["userId", "startTime", "duration", "pointsEarned"]
+    },
+    "ShopItem": {
+      "title": "ShopItem",
+      "description": "Items available in the shop",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string", "enum": ["hat", "outfit", "accessory"] },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["id", "name", "price", "category"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "A private study room",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "password": { "type": "string", "description": "Up to 10 characters" },
+        "creatorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "password", "creatorId", "createdAt"]
+    },
+    "RoomMember": {
+      "title": "RoomMember",
+      "description": "A user in a room",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "points": { "type": "number" },
+        "timeSpent": { "type": "number", "description": "Time spent in seconds" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "points", "timeSpent"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profile data"
+    },
+    "/users/{uid}/sessions/{sessionId}": {
+      "schema": "StudySession",
+      "description": "User's study history"
+    },
+    "/shopItems/{itemId}": {
+      "schema": "ShopItem",
+      "description": "Global shop items"
+    },
+    "/leaderboard/{uid}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string" },
+          "photoURL": { "type": "string" },
+          "totalStudyTime": { "type": "number" }
+        }
+      },
+      "description": "Public leaderboard entries"
+    },
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Study rooms"
+    },
+    "/rooms/{roomId}/members/{uid}": {
+      "schema": "RoomMember",
+      "description": "Members of a specific room"
+    }
+  }
+}

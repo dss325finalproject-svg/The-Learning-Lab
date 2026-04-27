@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Global Safety Net
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // Shared Helpers
+    // ===============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ===============================================================
+    // Validation Blueprints
+    // ===============================================================
+    
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'points', 'totalStudyTime']) &&
+             data.uid == request.auth.uid &&
+             data.points is number && data.points >= 0 &&
+             data.totalStudyTime is number && data.totalStudyTime >= 0;
+    }
+
+    function isValidSession(data) {
+      // Must have critical fields
+      return data.keys().hasAll(['userId', 'startTime', 'duration', 'pointsEarned']) &&
+             data.userId == request.auth.uid &&
+             data.duration is number && data.duration >= 0 &&
+             data.pointsEarned is number && data.pointsEarned >= 0;
+    }
+
+    function isValidRoom(data) {
+      return data.keys().hasAll(['name', 'password', 'creatorId', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 50 &&
+             data.password is string && data.password.size() <= 10 &&
+             data.creatorId == request.auth.uid;
+    }
+
+    function isValidRoomMember(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'points', 'timeSpent']) &&
+             data.uid == request.auth.uid &&
+             data.points is number &&
+             data.timeSpent is number;
+    }
+
+    // ===============================================================
+    // Collection Match Blocks
+    // ===============================================================
+
+    // Public Leaderboard
+    match /leaderboard/{userId} {
+      allow get: if true;
+      allow list: if true; // No PII here
+      allow write: if isValidId(userId) && isOwner(userId);
+    }
+
+    // Users & Subcollections
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Social app needs to find users
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUser(incoming());
+      allow update: if isValidId(userId) && isOwner(userId) && isValidUser(incoming());
+      
+      match /sessions/{sessionId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isValidId(sessionId) && isOwner(userId) && isValidSession(incoming());
+        allow delete: if false; // Study history is immutable
+      }
+    }
+
+    // Study Rooms
+    match /rooms/{roomId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isValidId(roomId) && isSignedIn() && isValidRoom(incoming());
+      allow update: if isValidId(roomId) && isSignedIn() && (existing().creatorId == request.auth.uid);
+      allow delete: if isValidId(roomId) && isSignedIn() && (existing().creatorId == request.auth.uid);
+
+      match /members/{memberId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow create, update: if isValidId(memberId) && isOwner(memberId) && isValidRoomMember(incoming());
+        allow delete: if isValidId(memberId) && isOwner(memberId);
+      }
+    }
+
+    // Static Data
+    match /shopItems/{itemId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+  }
+}
