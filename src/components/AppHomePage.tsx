@@ -12,11 +12,17 @@ interface AppHomePageProps {
 }
 
 export default function AppHomePage({ userData, onEnterLab, onStartTutorial }: AppHomePageProps) {
+  const hasTheme = userData?.theme && userData?.theme !== 'default';
+  
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden relative">
+    <div className={`min-h-screen ${hasTheme ? 'bg-transparent' : 'bg-[#FDFCFB]'} text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden relative`}>
       {/* Background blobs for aesthetics */}
-      <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-indigo-50/50 rounded-full blur-[100px] -z-10" />
-      <div className="absolute bottom-[5%] right-[-5%] w-[30%] h-[30%] bg-amber-50/50 rounded-full blur-[100px] -z-10" />
+      {!hasTheme && (
+        <>
+          <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-indigo-50/50 rounded-full blur-[100px] -z-10" />
+          <div className="absolute bottom-[5%] right-[-5%] w-[30%] h-[30%] bg-amber-50/50 rounded-full blur-[100px] -z-10" />
+        </>
+      )}
 
       {/* Floating Elements Animation */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">

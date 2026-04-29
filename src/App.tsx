@@ -30,6 +30,7 @@ const oceanImages = [
   'https://images.unsplash.com/photo-1505118380757-91f5f45d8de0?q=80&w=1920&auto=format&fit=crop', // Clear turquoise ripples
   'https://images.unsplash.com/photo-1544923246-77307dd654ca?q=80&w=1920&auto=format&fit=crop', // Deep ocean water texture
   'https://images.unsplash.com/photo-1439405326854-01518d04a4c3?q=80&w=1920&auto=format&fit=crop', // Infinite blue horizon
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1920&auto=format&fit=crop', // Tropical coastal waves
   'https://images.unsplash.com/photo-1468413253725-0d5181091126?q=80&w=1920&auto=format&fit=crop', // Crashing wave action
 ];
 
@@ -137,15 +138,51 @@ export default function App() {
     }
   };
 
-  if (loading || (user && !userData)) return (<div className="flex h-screen items-center justify-center bg-slate-50"><motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}><Sparkles className="h-12 w-12 text-primary" /></motion.div></div>);
+  if (loading || (user && !userData)) return (
+    <div className="flex h-screen items-center justify-center bg-slate-50">
+      <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+        <Sparkles className="h-12 w-12 text-primary" />
+      </motion.div>
+    </div>
+  );
+
+  const themeClass = userData?.theme ? `theme-${userData.theme}` : '';
+  const hasTheme = userData?.theme && userData?.theme !== 'default';
+  const baseBg = userData?.theme === 'ocean' ? 'bg-[#001D24]' : userData?.theme === 'nature' ? 'bg-[#FDFDFB]' : 'bg-background';
+
+  const renderBackground = () => (
+    <AnimatePresence mode="wait">
+      {bgImage && (
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <motion.img
+            key={bgImage}
+            src={bgImage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 2 }}
+            className="absolute inset-0 w-full h-full object-cover"
+            alt=""
+          />
+          {/* Subtle overlay to ensure readability without losing the immersive look */}
+          <div className={`absolute inset-0 transition-all duration-1000 ${userData?.theme === 'ocean' ? 'bg-indigo-950/20 backdrop-blur-[1px]' : 'bg-white/30 backdrop-blur-[1px]'}`} />
+        </div>
+      )}
+    </AnimatePresence>
+  );
 
   if (!user) return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#FDFCFB] p-6 text-slate-900 relative overflow-hidden">
+    <div className={`flex min-h-screen flex-col items-center justify-center ${baseBg} p-6 text-slate-900 relative overflow-hidden ${themeClass}`}>
+      {renderBackground()}
       {/* Decorative background elements for login */}
-      <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 -z-10 animate-pulse" />
-      <div className="absolute bottom-[10%] right-[10%] w-96 h-96 bg-amber-50 rounded-full blur-3xl opacity-50 -z-10" />
+      {!bgImage && (
+        <>
+          <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 -z-10 animate-pulse" />
+          <div className="absolute bottom-[10%] right-[10%] w-96 h-96 bg-amber-50 rounded-full blur-3xl opacity-50 -z-10" />
+        </>
+      )}
       
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-lg">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-lg relative z-10">
         <div className="flex justify-center mb-8">
           <motion.div
             animate={{ 
@@ -157,10 +194,10 @@ export default function App() {
             <AppLogo size="lg" />
           </motion.div>
         </div>
-        <h1 className="mb-4 text-5xl md:text-6xl font-black tracking-tight text-slate-900 bg-gradient-to-br from-slate-900 to-slate-700 bg-clip-text text-transparent">
+        <h1 className={`mb-4 text-5xl md:text-6xl font-black tracking-tight ${userData?.theme === 'ocean' ? 'text-white' : 'text-slate-900'}`}>
           The Learning Lab
         </h1>
-        <p className="mb-10 text-xl text-slate-500 font-medium">
+        <p className={`mb-10 text-xl font-medium ${userData?.theme === 'ocean' ? 'text-blue-100' : 'text-slate-500'}`}>
           Where study meets play. Join the quest for knowledge with your tiny companions.
         </p>
         <Button 
@@ -170,47 +207,31 @@ export default function App() {
         >
           Begin Your Quest
         </Button>
-        <p className="mt-8 text-sm text-slate-400">Join thousands of students elevating their study time.</p>
+        <p className={`mt-8 text-sm ${userData?.theme === 'ocean' ? 'text-blue-200/60' : 'text-slate-400'}`}>Join thousands of students elevating their study time.</p>
       </motion.div>
     </div>
   );
 
   if (!isAppStarted) return (
-    <AppHomePage 
-      userData={userData} 
-      onEnterLab={() => setIsAppStarted(true)} 
-      onStartTutorial={() => {
-        setIsAppStarted(true);
-        setShowTutorial(true);
-      }}
-    />
+    <div className={`relative min-h-screen ${baseBg} ${themeClass}`}>
+      {renderBackground()}
+      <div className="relative z-10">
+        <AppHomePage 
+          userData={userData} 
+          onEnterLab={() => setIsAppStarted(true)} 
+          onStartTutorial={() => {
+            setIsAppStarted(true);
+            setShowTutorial(true);
+          }}
+        />
+      </div>
+    </div>
   );
-
-  const themeClass = userData?.theme ? `theme-${userData.theme}` : '';
-  const hasTheme = userData?.theme && userData?.theme !== 'default';
-  const baseBg = userData?.theme === 'ocean' ? 'bg-[#001D24]' : userData?.theme === 'nature' ? 'bg-[#FDFDFB]' : 'bg-background';
 
   return (
     <div className={`flex h-screen ${baseBg} text-foreground overflow-hidden relative ${themeClass} transition-all duration-1000`}>
       {/* Dynamic Background Image */}
-      <AnimatePresence mode="wait">
-        {bgImage && (
-          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <motion.img
-              key={bgImage}
-              src={bgImage}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 2 }}
-              className="absolute inset-0 w-full h-full object-cover"
-              alt=""
-            />
-            {/* Subtle overlay to ensure readability without losing the immersive look */}
-            <div className={`absolute inset-0 transition-all duration-1000 ${userData?.theme === 'ocean' ? 'bg-indigo-950/20 backdrop-blur-[1px]' : 'bg-white/30 backdrop-blur-[1px]'}`} />
-          </div>
-        )}
-      </AnimatePresence>
+      {renderBackground()}
 
       {/* Back to Home Button in Sidebar */}
       <aside className="w-64 bg-card/90 backdrop-blur-md border-r border-border flex flex-col relative z-20 shadow-xl shadow-slate-200/20 overflow-y-auto scrollbar-thin">
